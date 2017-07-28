@@ -50,13 +50,13 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
 			</inertial>
             <collision>
 				<geometry>
-					<mesh filename="package://movo_description/meshes/movo_components/collision/vector_base_collision.stl" />
+					<mesh filename="package://vector_description/meshes/vector_components/collision/vector_base_collision.stl" />
 				</geometry>
 			</collision>
 			<visual>
 				<origin xyz="0 0 0" rpy="0 0 0" />
 				<geometry>
-					<mesh filename="package://movo_description/meshes/vector_components/visual/vector_base.dae" />
+					<mesh filename="package://vector_description/meshes/vector_components/visual/vector_base.dae" />
 				</geometry>
 			</visual>
 		</link>
@@ -81,13 +81,14 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
 			</inertial>
             <collision>
 				<geometry>
-					<mesh filename="package://movo_description/meshes/movo_components/collision/std_payload_plate_collision.stl" />
+					<mesh filename="package://vector_description/meshes/vector_components/collision/std_payload_plate_collision.stl" />
+					
 				</geometry>
 			</collision>
 			<visual>
 				<origin xyz="0 0 0" rpy="0 0 0" />
 				<geometry>
-					<mesh filename="package://movo_description/meshes/vector_components/visual/std_payload_plate.dae" />
+					<mesh filename="package://vector_description/meshes/vector_components/visual/std_payload_plate.dae" />
 				</geometry>
 			</visual>
 		</link>
