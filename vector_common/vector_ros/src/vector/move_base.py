@@ -119,19 +119,12 @@ class VectorMoveBase():
         self.running_time = 0
         self.vector_operational_state = 0
         self.run_waypoints = False
-        initial_request_states = dict({"tractor":TRACTOR_REQUEST,"balance":TRACTOR_REQUEST})
         
-        try:
-            initial_mode_req = initial_request_states[self.initial_state]
-        except:
-            rospy.logerr("Initial mode not recognized it should be tractor or balance")
-            self._shutdown()
-            return
                 
         """
         Initialize subscribers
         """
-        rospy.Subscriber("/vector/feedback/battery", AuxPower, self._handle_low_aux_power)
+        rospy.Subscriber("/vector/feedback/battery", Battery, self._handle_low_aux_power)
         rospy.Subscriber("/vector/feedback/status", Status, self._handle_status)
         rospy.Subscriber("/move_base_simple/goal", PoseStamped,  self._simple_goal_cb)
         rospy.Subscriber('/vector/abort_navigation',Bool,self._shutdown)
@@ -146,12 +139,10 @@ class VectorMoveBase():
         self.config_cmd = ConfigCmd()
         self.cmd_config_cmd_pub = rospy.Publisher('/vector/gp_command', ConfigCmd, queue_size=10)
         self.cmd_vel_pub = rospy.Publisher('/vector/teleop/cmd_vel', Twist, queue_size=10)
-            
-        if (BALANCE_REQUEST == initial_mode_req):
-            rospy.loginfo("Please put the platform into balance by tipping past 0 deg in pitch")
+
         
         if (False == self.is_sim):
-            if (False == self._goto_mode_and_indicate(initial_mode_req)):
+            if (False == self._goto_mode_and_indicate()):
                 rospy.logerr("Could not set operational state")
                 rospy.logerr("Platform did not respond")
                 self._shutdown()
@@ -518,25 +509,25 @@ class VectorMoveBase():
         
         self.vector_operational_state = stat.operational_state
 
-    def _goto_mode_and_indicate(self,requested):        
+    def _goto_mode_and_indicate(self):        
         """
         define the commands for the function
         """
         config_cmd = ConfigCmd()
         
         """
-        Send the audio command
+        Send the mode command
         """
         r = rospy.Rate(10)
         start_time = rospy.get_time()
-        while ((rospy.get_time() - start_time) < 30.0) and (VECTOR_MODES_DICT[requested] != self.vector_operational_state):
+        while ((rospy.get_time() - start_time) < 30.0) and (VECTOR_MODES_DICT[TRACTOR_REQUEST] != self.vector_operational_state):
             config_cmd.header.stamp = rospy.get_rostime()
             config_cmd.gp_cmd = 'GENERAL_PURPOSE_CMD_SET_OPERATIONAL_MODE'
-            config_cmd.gp_param = requested
+            config_cmd.gp_param = TRACTOR_REQUEST
             self.cmd_config_cmd_pub.publish(config_cmd)
             r.sleep()
         
-        if (VECTOR_MODES_DICT[requested] != self.vector_operational_state):
+        if (VECTOR_MODES_DICT[TRACTOR_REQUEST] != self.vector_operational_state):
             rospy.logerr("Could not set operational Mode")
             rospy.loginfo("The platform did not respond, ")
             return False
