@@ -57,7 +57,6 @@ from dynamic_reconfigure.client import Client
 from dynamic_reconfigure.msg import Config
 from io_eth import IoEthThread
 from vector_data_classes import VECTOR_DATA
-from vector_linear_actuator import LinearActuator
 import multiprocessing
 import rospy
 import select
@@ -95,14 +94,6 @@ class VectorDriver:
         Initialize the publishers for MOVO
         """
         self.vector_data = VECTOR_DATA()
-        
-        """
-        Start the thread for the linear actuator commands
-        """
-        self._linear = LinearActuator()
-        if (False == self._linear.init_success):
-            rospy.logerr("Could not initialize the linear actuator interface! exiting...")
-            return    
         
         """
         Initialize faultlog related items
@@ -215,7 +206,6 @@ class VectorDriver:
         with self.terminate_mutex:
             self.need_to_terminate = True
         rospy.loginfo("Vector Driver has called the Shutdown method, terminating")
-        self._linear.Shutdown()
         self.comm.Close()
         self.tx_queue_.close()
         self.rx_queue_.close()    
@@ -391,7 +381,7 @@ class VectorDriver:
         The teleop limits are always the minimum of the actual machine limit and the ones set for teleop
         """
         config.teleop_x_vel_limit_mps = minimum_f(config.teleop_x_vel_limit_mps, config.x_vel_limit_mps)
-        config.teleop_y_vel_limit_mps = minimum_f(config.teleop_y_vel_limit_mps, config.x_vel_limit_mps)
+        config.teleop_y_vel_limit_mps = minimum_f(config.teleop_y_vel_limit_mps, config.y_vel_limit_mps)
         config.teleop_accel_limit_mps2 = minimum_f(config.teleop_accel_limit_mps2, config.accel_limit_mps2)
         config.teleop_yaw_rate_limit_rps = minimum_f(config.teleop_yaw_rate_limit_rps, config.yaw_rate_limit_rps)
         config.teleop_yaw_accel_limit_rps2 = minimum_f(config.teleop_yaw_accel_limit_rps2, config.teleop_yaw_accel_limit_rps2)      
@@ -404,11 +394,6 @@ class VectorDriver:
                                                     config.teleop_accel_limit_mps2,
                                                     config.teleop_yaw_rate_limit_rps,
                                                     config.teleop_yaw_accel_limit_rps2])
-                                                    
-        """
-        Update the linear actuator velocity limit
-        """
-        self._linear.UpdateVelLimit(config.linear_actuator_vel_limit_mps)
         
         if self.param_server_initialized:
             if ((1<<4) == (level & (1<<4))):

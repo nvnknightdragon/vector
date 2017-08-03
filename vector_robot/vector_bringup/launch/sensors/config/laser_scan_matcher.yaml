@@ -1,6 +1,6 @@
 use_odom:                             true
 use_vel:                              false
-use_imu:                              true
+use_imu:                              false
 max_iterations:                       10
 publish_tf:                           false
 publish_pose:                         false

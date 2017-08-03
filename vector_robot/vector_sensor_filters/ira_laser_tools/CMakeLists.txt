@@ -6,16 +6,25 @@ project(ira_laser_tools)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS laser_geometry roscpp sensor_msgs std_msgs tf dynamic_reconfigure pcl_ros)
 
+# Starting in ROS Jade, using cmake_modules to find Eigen is deprecated.
+# Instead, find_package(Eigen3) is called which uses the cmake config included
+# with the system install of Eigen. For compatibility with older ROS distros,
+# we fall back to the cmake_modules version if needed.
+#
+# See http://wiki.ros.org/jade/Migration#Eigen_CMake_Module_in_cmake_modules
+#
 find_package(Eigen3)
 if(NOT EIGEN3_FOUND)
-  # Fallback to pkg-config
-  find_package(PkgConfig)
-  pkg_check_modules(EIGEN3 REQUIRED eigen3)
+  # Fallback to cmake_modules
+  find_package(cmake_modules REQUIRED)
+  find_package(Eigen REQUIRED)
+  set(EIGEN3_INCLUDE_DIRS ${EIGEN_INCLUDE_DIRS})
 else()
   set(EIGEN3_INCLUDE_DIRS ${EIGEN3_INCLUDE_DIR})
 endif()
-add_definitions(${EIGEN3_DEFINITIONS})
 
+include_directories(include ${catkin_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIRS})
+link_directories(${catkin_LIBRARY_DIRS} ${EIGEN3_LIBRARY_DIRS})
 
 find_package(PCL REQUIRED)
 
@@ -64,7 +73,7 @@ generate_dynamic_reconfigure_options(cfg/laserscan_multi_merger.cfg cfg/lasersca
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-   INCLUDE_DIRS ${EIGEN3_INCLUDE_DIRS}
+   INCLUDE_DIRS
 #  LIBRARIES laser_merger
 #  CATKIN_DEPENDS laser_geometry roscpp sensor_msgs std_msgs tf
 #  DEPENDS system_lib
