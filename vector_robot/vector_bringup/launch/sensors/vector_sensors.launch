@@ -19,13 +19,13 @@
         <param name="timelimit" type="int" value="5" />
     </node>
 
-    <node pkg="sick_tim" type="sick_tim551_2050001" name="rear_laser_node" clear_params="true" respawn="true">
-        <remap from="scan" to="/vector/rear_scan" />
+    <node pkg="sick_tim" type="sick_tim551_2050001" name="$(optenv LASER2_PREFIX rear)_laser_node" respawn="false">
+        <remap from="scan" to="/vector/$(optenv LASER2_PREFIX rear)_scan" />
         <param name="max_ang" value="$(optenv LASER2_MAX_ANGLE 2.35619449019)"/>
         <param name="min_ang" value="$(optenv LASER2_MIN_ANGLE -2.35619449019)"/>
         <param name="intensity" type="bool" value="True" />
         <param name="skip" type="int" value="0" />
-        <param name="frame_id" type="str" value="rear_laser_link" />
+        <param name="frame_id" type="str" value="$(optenv LASER2_PREFIX rear)_laser_link" />
         <param name="time_offset" type="double" value="-0.001" />
         <param name="publish_datagram" type="bool" value="False" />
         <param name="subscribe_datagram" type="bool" value="false" />
@@ -34,6 +34,9 @@
         <param name="hostname" type="string" value="$(optenv VECTOR_LASER2_IP 10.66.171.9)" />
         <param name="port" type="string" value="$(optenv VECTOR_LASER2_PORT 2112)" />
         <param name="timelimit" type="int" value="5" />
+        <!-- Older versions of the scanner firmware report an incorrect time_increment.
+         If you get a warning about time_increment, uncomment this. -->
+        <!-- <param name="time_increment" type="double" value="0.000061722" /-->
     </node>
     
     <node pkg="ira_laser_tools" name="laserscan_multi_merger" type="laserscan_multi_merger" output="screen">
@@ -51,6 +54,15 @@
         <rosparam command="load" 
             file="$(find vector_bringup)/launch/sensors/config/laser_scan_filter.yaml" />
     </node>
+    
+    <node pkg="imu_complementary_filter" type="complementary_filter_node"
+      name="complementary_filter_gain_node" output="screen">
+      
+        <remap from="imu/data_raw" to="/vector/feedback/sic_imu"/>
+        <param name="constant_dt" value="0.01"/>
+        <param name="fixed_frame" value="base_link"/>
+        <param name="publish_debug_topics" value="true"/>
+     </node>
     
     <node pkg="laser_scan_matcher" type="laser_scan_matcher_node" name="laser_scan_matcher_node" output="screen" if="$(optenv VECTOR_ENABLE_LSM false)" >
         <rosparam command="load" 
