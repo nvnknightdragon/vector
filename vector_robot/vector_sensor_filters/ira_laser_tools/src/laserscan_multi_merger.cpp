@@ -20,16 +20,12 @@ using namespace std;
 using namespace pcl;
 using namespace laserscan_multi_merger;
 
-static bool new_samp=true;
-static int num_samps=0;
-static double samp_factor=1.0;
-
 class LaserscanMerger
 {
 public:
     LaserscanMerger();
     void scanCallback(const sensor_msgs::LaserScan::ConstPtr& scan, std::string topic);
-    void pointcloud_to_laserscan(Eigen::MatrixXf points, pcl::PCLPointCloud2 *merged_cloud, ros::Time stamp);
+    void pointcloud_to_laserscan(Eigen::MatrixXf points, pcl::PCLPointCloud2 *merged_cloud);
     void reconfigureCallback(laserscan_multi_mergerConfig &config, uint32_t level);
 
 private:
@@ -54,8 +50,6 @@ private:
     double scan_time;
     double range_min;
     double range_max;
-    ros::Time start;
-    ros::Time end;
 
     string destination_frame;
     string cloud_destination_topic;
@@ -76,47 +70,70 @@ void LaserscanMerger::reconfigureCallback(laserscan_multi_mergerConfig &config, 
 
 void LaserscanMerger::laserscan_topic_parser()
 {
+	int attempts=0;
 	// LaserScan topics to subscribe
+	ros::master::V_TopicInfo topics;
+
     istringstream iss(laserscan_topics);
 	vector<string> tokens;
 	copy(istream_iterator<string>(iss), istream_iterator<string>(), back_inserter<vector<string> >(tokens));
 
 	vector<string> tmp_input_topics;
+	
+	ros::Rate r(0.5); // 0.5 hz
+    while (attempts<10)
+    {
+        
+        ros::master::getTopics(topics);
+	    for(int i=0;i<tokens.size();++i)
+	    {
+	        
+	        for(int j=0;j<topics.size();++j)
+		    {
+			    if( (tokens[i].compare(topics[j].name) == 0) && (topics[j].datatype.compare("sensor_msgs/LaserScan") == 0) )
+			    {
+				    tmp_input_topics.push_back(topics[j].name);
+			    }
+		    }
+	    }
 
-	for(int i=0;i<tokens.size();++i)
-	{
-		tmp_input_topics.push_back(tokens[i]);
-	}
-
-	sort(tmp_input_topics.begin(),tmp_input_topics.end());
-	std::vector<string>::iterator last = std::unique(tmp_input_topics.begin(), tmp_input_topics.end());
-	tmp_input_topics.erase(last, tmp_input_topics.end());
+	    sort(tmp_input_topics.begin(),tmp_input_topics.end());
+	    std::vector<string>::iterator last = std::unique(tmp_input_topics.begin(), tmp_input_topics.end());
+	    tmp_input_topics.erase(last, tmp_input_topics.end());
 
 
-	// Do not re-subscribe if the topics are the same
-	if( (tmp_input_topics.size() != input_topics.size()) || !equal(tmp_input_topics.begin(),tmp_input_topics.end(),input_topics.begin()))
-	{
+	    // Do not re-subscribe if the topics are the same
+	    if( (tmp_input_topics.size() != input_topics.size()) || !equal(tmp_input_topics.begin(),tmp_input_topics.end(),input_topics.begin()))
+	    {
 
-		// Unsubscribe from previous topics
-		for(int i=0; i<scan_subscribers.size(); ++i)
-			scan_subscribers[i].shutdown();
-
-		input_topics = tmp_input_topics;
-		if(input_topics.size() > 0)
-		{
-            scan_subscribers.resize(input_topics.size());
-			clouds_modified.resize(input_topics.size());
-			clouds.resize(input_topics.size());
-            ROS_INFO("Subscribing to topics\t%ld", scan_subscribers.size());
-			for(int i=0; i<input_topics.size(); ++i)
-			{
-                scan_subscribers[i] = node_.subscribe<sensor_msgs::LaserScan> (input_topics[i].c_str(), 1, boost::bind(&LaserscanMerger::scanCallback,this, _1, input_topics[i]));
-				clouds_modified[i] = false;
-				cout << input_topics[i] << " ";
+		    // Unsubscribe from previous topics
+		    for(int i=0; i<scan_subscribers.size(); ++i){
+			    scan_subscribers[i].shutdown();
 			}
-		}
-		else
-            ROS_INFO("Not subscribed to any topic.");
+
+		    input_topics = tmp_input_topics;
+		    if(input_topics.size() > 0)
+		    {
+                scan_subscribers.resize(input_topics.size());
+			    clouds_modified.resize(input_topics.size());
+			    clouds.resize(input_topics.size());
+                ROS_INFO("Subscribing to %ld laser topics", scan_subscribers.size());
+			    for(int i=0; i<input_topics.size(); ++i)
+			    {
+			        ROS_INFO("Laser topic %d: %s", i, input_topics[i].c_str());
+                    scan_subscribers[i] = node_.subscribe<sensor_msgs::LaserScan> (input_topics[i].c_str(), 1, boost::bind(&LaserscanMerger::scanCallback,this, _1, input_topics[i]));
+				    clouds_modified[i] = false;
+			    }
+			    break;
+		    }
+		    else{
+                ROS_WARN("Failed to find laser topics for merging....");
+            }
+	    }
+	    attempts++;
+	    ROS_INFO("Laser topics not published yet; waiting 2 seconds and retrying....");
+	    r.sleep();
+	    
 	}
 }
 
@@ -144,13 +161,6 @@ void LaserscanMerger::scanCallback(const sensor_msgs::LaserScan::ConstPtr& scan,
 
     // Verify that TF knows how to transform from the received scan to the destination scan frame
 	tfListener_.waitForTransform(scan->header.frame_id.c_str(), destination_frame.c_str(), scan->header.stamp, ros::Duration(1));
-    if (true == new_samp)
-    {
-        start = scan->header.stamp;
-        new_samp=false;
-    }
-    num_samps++;
-    
 
 	projector_.transformLaserScanToPointCloud(scan->header.frame_id, *scan, tmpCloud1, tfListener_);
 	try
@@ -190,25 +200,17 @@ void LaserscanMerger::scanCallback(const sensor_msgs::LaserScan::ConstPtr& scan,
 
 		Eigen::MatrixXf points;
 		getPointCloudAsEigen(merged_cloud,points);
-		end = scan->header.stamp;
-		samp_factor = (double)(1.0/num_samps);
-		
-		ros::Time avg_time = start+(end-start)*samp_factor;
 
-		pointcloud_to_laserscan(points, &merged_cloud, avg_time);
-		num_samps=0;
-		samp_factor = 1.0;
-		new_samp = true;
+		pointcloud_to_laserscan(points, &merged_cloud);
 	}
 }
 
-void LaserscanMerger::pointcloud_to_laserscan(Eigen::MatrixXf points, pcl::PCLPointCloud2 *merged_cloud, ros::Time stamp)
+void LaserscanMerger::pointcloud_to_laserscan(Eigen::MatrixXf points, pcl::PCLPointCloud2 *merged_cloud)
 {
-
 	sensor_msgs::LaserScanPtr output(new sensor_msgs::LaserScan());
 	output->header = pcl_conversions::fromPCL(merged_cloud->header);
 	output->header.frame_id = destination_frame.c_str();
-	output->header.stamp = stamp;
+	output->header.stamp = ros::Time::now();  //fixes #265
 	output->angle_min = this->angle_min;
 	output->angle_max = this->angle_max;
 	output->angle_increment = this->angle_increment;
@@ -271,4 +273,3 @@ int main(int argc, char** argv)
 
 	return 0;
 }
-
