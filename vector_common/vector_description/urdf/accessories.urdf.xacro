@@ -42,7 +42,7 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
                 <alwaysOn>1</alwaysOn>
                 <updateRate>50.0</updateRate>
                 <bodyName>sic_imu_frame</bodyName>
-                <topicName>/movo/feedback/sic_imu</topicName>
+                <topicName>/vector/feedback/sic_imu</topicName>
                 <accelDrift>0.0005 0.0005 0.0005</accelDrift>
                 <accelGaussianNoise>0.0005 0.0005 0.0005</accelGaussianNoise>
                 <rateDrift>0.0005 0.0005 0.0005</rateDrift>

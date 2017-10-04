@@ -6,7 +6,7 @@ from catkin_pkg.python_setup import generate_distutils_setup
 
 # fetch values from package.xml
 setup_args = generate_distutils_setup(
-    packages=['vector','vector_gripper_interface','vector_joint_interface','vector_jtas'],
+    packages=['vector'],
     package_dir={'': 'src'})
 
 setup(**setup_args)

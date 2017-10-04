@@ -43,14 +43,14 @@ arising out of or based upon:
  
  \file   system_defines.py
 
- \brief  This module defines the interface for the SI MOVO
+ \brief  This module defines the interface for the SI VECTOR
 
  \Platform: Linux/ROS Indigo
 --------------------------------------------------------------------"""
 
 """------------------------------------------------------------------------
-SI MOVO Command structures
-There are three types of messages the SI MOVO will accept:
+SI VECTOR Command structures
+There are three types of messages the SI VECTOR will accept:
 
 2. Holonomic motion command message: This message contains three 32-bit IEEE754 floating 
 point variables in the standard ROS twist message format. Only vx,vy, and vtheta are 
@@ -313,7 +313,7 @@ DTZ_REQUEST       = 3
 STANDBY_REQUEST   = 4
 TRACTOR_REQUEST   = 5
 
-MOVO_MODES_DICT = dict({TRACTOR_REQUEST:5,STANDBY_REQUEST:4,POWERDOWN_REQUEST:6})
+VECTOR_MODES_DICT = dict({TRACTOR_REQUEST:5,STANDBY_REQUEST:4,POWERDOWN_REQUEST:6})
 
 """------------------------------------------------------------------------
 This command requests the faultlog from the machine. The general purpose parameter 
@@ -646,6 +646,6 @@ ROS_CHECKSUM_INDEX                  =(110)
 
 
 NUMBER_OF_CONFIG_PARAM_VARIABLES      =(ROS_FRAM_ETH_IP_ADDRESS_INDEX - START_FRAM_CONFIG_BLOCK)
-NUMBER_OF_MOVO_RSP_WORDS            =(END_FRAM_CONFIG_BLOCK)
+NUMBER_OF_VECTOR_RSP_WORDS            =(END_FRAM_CONFIG_BLOCK)
 NUMBER_OF_FAULTLOG_WORDS              =(311)
 

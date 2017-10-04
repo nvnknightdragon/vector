@@ -64,7 +64,7 @@ import threading
 import re
 import os
 """
-Dictionary for all MOVO configuration command ID's
+Dictionary for all VECTOR configuration command ID's
 """
 command_ids = dict({"GENERAL_PURPOSE_CMD_NONE":                   0,
                     "GENERAL_PURPOSE_CMD_SET_OPERATIONAL_MODE":   1,
@@ -91,7 +91,7 @@ class VectorDriver:
         self.last_move_base_update = rospy.Time.now().to_sec()
 
         """
-        Initialize the publishers for MOVO
+        Initialize the publishers for VECTOR
         """
         self.vector_data = VECTOR_DATA()
         
@@ -102,7 +102,7 @@ class VectorDriver:
         self.extracting_faultlog = False
         
         """
-        Initialize the dynamic reconfigure server for MOVO
+        Initialize the dynamic reconfigure server for VECTOR
         """
         self.param_server_initialized = False
         self.dyn_reconfigure_srv = Server(vectorConfig, self._dyn_reconfig_callback)
@@ -123,7 +123,7 @@ class VectorDriver:
             return            
         
         """
-        Create the thread to run MOVO communication
+        Create the thread to run VECTOR communication
         """
         self.tx_queue_ = multiprocessing.Queue()
         self.rx_queue_ = multiprocessing.Queue()
@@ -134,7 +134,7 @@ class VectorDriver:
                                     
         
         if (False == self.comm.link_up):
-            rospy.logerr("Could not open socket for MOVO...")
+            rospy.logerr("Could not open socket for VECTOR...")
             self.comm.close()
             return
         
@@ -160,7 +160,7 @@ class VectorDriver:
         """
         rospy.loginfo("Stopping the data stream")
         if (False == self._continuous_data(False)):
-            rospy.logerr("Could not stop MOVO communication stream")
+            rospy.logerr("Could not stop VECTOR communication stream")
             self.Shutdown()
             return
         
@@ -172,7 +172,7 @@ class VectorDriver:
         self.extracting_faultlog = True
         
         if (False == self._extract_faultlog()):
-            rospy.logerr("Could not get retrieve MOVO faultlog")
+            rospy.logerr("Could not get retrieve VECTOR faultlog")
             self.Shutdown()
             return          
         
@@ -181,7 +181,7 @@ class VectorDriver:
         """
         rospy.loginfo("Starting the data stream")
         if (False == self._continuous_data(True)):
-            rospy.logerr("Could not start MOVO communication stream")
+            rospy.logerr("Could not start VECTOR communication stream")
             self.Shutdown()
             return
             
@@ -265,7 +265,7 @@ class VectorDriver:
         if (self.extracting_faultlog):
             valid_data = validate_response(data_bytes,((NUMBER_OF_FAULTLOG_WORDS+1)*4))
         else:
-            valid_data = validate_response(data_bytes,((NUMBER_OF_MOVO_RSP_WORDS+1)*4))
+            valid_data = validate_response(data_bytes,((NUMBER_OF_VECTOR_RSP_WORDS+1)*4))
         
         if (False == valid_data):
             rospy.logerr("bad vector data packet")
