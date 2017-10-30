@@ -259,10 +259,8 @@ namespace gazebo
 
     // getting data for base_footprint to odom transform
     math::Pose pose = this->parent_->GetWorldPose();
-
-    tf::Quaternion qt(pose.rot.x, pose.rot.y, pose.rot.z, pose.rot.w);
-    tf::Vector3 vt(pose.pos.x, pose.pos.y, pose.pos.z);
-
+    tf::Quaternion qt(pose.rot.x,pose.rot.y,pose.rot.z,pose.rot.w);
+    tf::Vector3 vt(pose.pos.x, pose.pos.y, 0.0);
     tf::Transform base_footprint_to_odom(qt, vt);
     transform_broadcaster_->sendTransform(
         tf::StampedTransform(base_footprint_to_odom, current_time, odom_frame,
@@ -271,6 +269,7 @@ namespace gazebo
     // publish odom topic
     odom_.pose.pose.position.x = pose.pos.x;
     odom_.pose.pose.position.y = pose.pos.y;
+    odom_.pose.pose.position.z = 0.0;
 
     odom_.pose.pose.orientation.x = pose.rot.x;
     odom_.pose.pose.orientation.y = pose.rot.y;
