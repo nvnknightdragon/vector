@@ -1,7 +1,8 @@
 <!-- Launch file for Stanley Innovation enabled Vector1 PC startup -->
 
 <launch>
-    <rosparam param="use_sime_time">true</rosparam>
+    <param name="/use_sim_time" value="true"/>
+    
     <!-- ROS Driver, Robot State Publisher, and sensors -->
     <node pkg="si_utils" type="timed_roslaunch"
         args="1 vector_gazebo vector_cafe.launch"
