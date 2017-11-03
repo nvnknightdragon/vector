@@ -4,6 +4,8 @@
     <arg name="paused" default="false"/>
     <arg name="gui" default="true"/>
     <arg name="world" default="worlds/empty.world"/>
+    
+    <rosparam param="use_sime_time">true</rosparam>
 
     <!-- startup simulated world -->
     <include file="$(find gazebo_ros)/launch/empty_world.launch">

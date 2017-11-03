@@ -83,7 +83,7 @@
       <sim_time>754 381000000</sim_time>
       <real_time>162 449602216</real_time>
       <wall_time>1492056129 462201884</wall_time>
-      <model name='beer_0'>
+      <model name='beer'>
         <pose>1.00041 -4.69367 1.19389 6e-06 2.5e-05 -0.000164</pose>
         <link name='link'>
           <pose>1.00041 -4.69367 1.30889 6e-06 2.5e-05 -0.000164</pose>
@@ -435,7 +435,7 @@
       </link>
       <static>0</static>
     </model>
-    <model name='cafe_0'>
+    <model name='cafe'>
       <static>1</static>
       <link name='link'>
         <inertial>
@@ -453,7 +453,7 @@
         <collision name='collision'>
           <geometry>
             <mesh>
-              <uri>model://cafe/meshes/cafe.dae</uri>
+              <uri>model://cafe/meshes/cafe.stl</uri>
             </mesh>
           </geometry>
           <max_contacts>10</max_contacts>
@@ -482,9 +482,9 @@
         <kinematic>0</kinematic>
         <gravity>1</gravity>
       </link>
-      <pose>2 1 0 0 -0 0</pose>
+      <pose>0 0 0 0 0 0</pose>
     </model>
-    <model name='beer_0'>
+    <model name='beer'>
       <link name='link'>
         <pose>0 0 0.115 0 -0 0</pose>
         <inertial>

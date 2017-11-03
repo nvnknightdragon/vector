@@ -1,11 +1,11 @@
 global_costmap:
-    global_frame:         odom
-    rolling_window:       true
-    track_unknown_space:  true
-
-    plugins:
-        - {name: obstacles_costmap2d,       type: "costmap_2d::ObstacleLayer"}
-        - {name: inflation,                 type: "costmap_2d::InflationLayer"}
+   global_frame: odom
+   static_map: false
+   rolling_window: true
+   width: 8.0
+   height: 8.0
+   resolution: 0.05
+   footprint_padding: 0.0
   
 
 

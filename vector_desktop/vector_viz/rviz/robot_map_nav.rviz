@@ -10,6 +10,7 @@ Panels:
         - /Sensing1/LaserScan1
         - /Navigation1
         - /Navigation1/Global Plan1
+        - /Navigation1/Local Plan1
         - /MarkerArray1
       Splitter Ratio: 0.595238
     Tree Height: 843
@@ -232,11 +233,11 @@ Visualization Manager:
           Class: rviz/Map
           Color Scheme: costmap
           Draw Behind: false
-          Enabled: true
+          Enabled: false
           Name: Local Costmap
           Topic: /move_base/local_costmap/costmap
           Unreliable: false
-          Value: true
+          Value: false
         - Alpha: 1
           Buffer Length: 1
           Class: rviz/Path
@@ -280,7 +281,7 @@ Visualization Manager:
           Radius: 0.03
           Shaft Diameter: 0.1
           Shaft Length: 0.1
-          Topic: /move_base/DWAPlannerROS/local_plan
+          Topic: /move_base/EBandPlannerROS/global_plan
           Unreliable: false
           Value: true
       Enabled: true
@@ -299,12 +300,7 @@ Visualization Manager:
       Marker Topic: /vector/waypoints
       Name: MarkerArray
       Namespaces:
-        Goal-0: true
-        Goal-1: true
-        Goal-2: true
-        Goal-3: true
-        Goal-4: true
-        Goal-5: true
+        {}
       Queue Size: 100
       Value: true
   Enabled: true
@@ -329,22 +325,22 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 17.5523
+      Distance: 11.9614
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.06
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 0.288384
-        Y: -0.755876
-        Z: -0.0387377
+        X: 0.31646
+        Y: 4.56051
+        Z: -0.0399638
       Name: Current View
       Near Clip Distance: 0.01
       Pitch: 1.5698
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 2.8136
+      Yaw: 2.9036
     Saved: ~
 Window Geometry:
   Displays:
