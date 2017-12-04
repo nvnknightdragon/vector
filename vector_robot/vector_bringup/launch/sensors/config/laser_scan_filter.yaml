@@ -1,17 +1,4 @@
 scan_filter_chain:
-- type: laser_filters/ScanShadowsFilter
-  name: shadows
-  params:
-    min_angle: 10
-    max_angle: 170
-    neighbors: 1
-    window: 1
-- type: laser_filters/LaserScanIntensityFilter
-  name: intensity
-  params: 
-    lower_threshold: 35
-    upper_threshold: 200
-    disp_histogram: 0
 - type: range_sensor_filters/LaserScanFootprintFilter
   name: footprint_filter
   params:
