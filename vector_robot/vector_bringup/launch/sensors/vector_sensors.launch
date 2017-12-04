@@ -63,6 +63,19 @@
         <param name="scan_destination_topic" value="/vector/base_scan_filtered"/>
         <param name="laserscan_topics" value ="/vector/filtered_front_scan /vector/filtered_rear_scan"/>
     </node>
+
+	<node pkg="si_utils" type="laserscan_to_pcl2" name="laserscan_to_pcl2" output="screen">
+	    <remap from="scan" to="/vector/base_scan_filtered"/>
+	    <remap from="points2" to="/vector/scan_multi_points2"/>
+	</node>
+	
+	<node name="statistical_outlier_removal" pkg="nodelet" type="nodelet"
+        args="standalone pcl/StatisticalOutlierRemoval">
+		<remap from="~input" to="/vector/scan_multi_points2" />
+		<remap from="~output" to="/vector/filtered_scan_points2" />
+		<rosparam>mean_k: 2</rosparam>
+		<rosparam>stddev: 0.3</rosparam>
+	</node>	
     
     <node pkg="imu_complementary_filter" type="complementary_filter_node"
       name="complementary_filter_gain_node" output="screen">
