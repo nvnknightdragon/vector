@@ -1,4 +1,4 @@
-use_odom:                             false
+use_odom:                             true
 use_vel:                              false
 use_imu:                              true
 max_iterations:                       100

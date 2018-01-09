@@ -1,10 +1,10 @@
 """--------------------------------------------------------------------
-COPYRIGHT 2016 Stanley Innovation Inc.
+COPYRIGHT 2014 Stanley Innovation Inc.
 
 Software License Agreement:
 
 The software supplied herewith by Stanley Innovation Inc. (the "Company") 
-for its licensed SI Vector Platform is intended and supplied to you, 
+for its licensed vector RMP Robotic Platforms is intended and supplied to you, 
 the Company's customer, for use solely and exclusively with Stanley Innovation 
 products. The software is owned by the Company and/or its supplier, and is 
 protected under applicable copyright laws.  All rights are reserved. Any use in 
@@ -53,7 +53,7 @@ from system_defines import *
 from vector_msgs.msg import *
 from sensor_msgs.msg import Joy
 from geometry_msgs.msg import Twist
-from std_msgs.msg import Bool,Float64
+from std_msgs.msg import Bool,Float64,UInt32
 import rospy
 import sys
 import math
@@ -62,16 +62,20 @@ import math
 mapping for controller order is dtz_request, powerdown_request, standby_request, tractor_request, balance_request, audio_request, 
 deadman_input, manual_ovvrd_input, twist_linear_x_input, twist_linear_y_input, twist_angular_z_input
 """
-MAP_DTZ_IDX         = 0
-MAP_PWRDWN_IDX      = 1
-MAP_STANDBY_IDX     = 2
-MAP_TRACTOR_IDX     = 3
-MAP_BALANCE_IDX     = 4
-MAP_AUDIO_IDX       = 5
-MAP_REC_GOAL_IDX    = 6
-MAP_DEADMAN_IDX     = 7
-MAP_MAN_OVVRD_IDX   = 8
-NUMBER_OF_MOMENTARY_INPUTS = 9
+MAP_STANDBY_IDX     = 0
+MAP_TRACTOR_IDX     = 1
+MAP_START_WP_IDX    = 2
+MAP_STOP_WP_IDX     = 3
+MAP_RESET_WP_IDX    = 4
+MAP_REC_WP_IDX      = 5
+MAP_CLEAR_WP_IDX    = 6
+MAP_STOP_ROBOT_IDX  = 7
+MAP_LOAD_WP_REC_IDX = 8
+MAP_SAVE_WP_REC_IDX = 9
+MAP_AUDIO_IDX       = 10
+MAP_DEADMAN_IDX     = 11
+MAP_MAN_OVVRD_IDX   = 12
+NUMBER_OF_MOMENTARY_INPUTS = 13
 
 
 MAP_TWIST_LIN_X_IDX = 0
@@ -84,6 +88,23 @@ class VectorTeleop:
     def __init__(self):
          
         self.is_sim = rospy.get_param('~sim',False)
+
+        self.ctrl_map = dict({'momentary':[[{'is_button':True,'index':6,'set_val':1}],
+                                           [{'is_button':True,'index':7,'set_val':1}],
+                                           [{'is_button':True,'index':0,'set_val':1}],
+                                           [{'is_button':True,'index':1,'set_val':1}],
+                                           [{'is_button':True,'index':3,'set_val':1}],
+                                           [{'is_button':True,'index':2,'set_val':1}],
+                                           [{'is_button':True,'index':4,'set_val':1}],
+                                           [{'is_button':True,'index':5,'set_val':1}],
+                                           [{'is_button':False,'index':7,'invert_axis':False,'set_thresh':0.9}],
+                                           [{'is_button':False,'index':7,'invert_axis':True,'set_thresh':0.9}],
+                                           [{'is_button':False,'index':6,'invert_axis':False,'set_thresh':0.9}],
+                                           [{'is_button':False,'index':2,'invert_axis':True,'set_thresh':0.9}],
+                                           [{'is_button':False,'index':5,'invert_axis':True,'set_thresh':0.9}]],
+                             'axis_range':[{'index':1,'invert_axis':False},
+                                           {'index':0,'invert_axis':False},
+                                           {'index':3,'invert_axis':False}]})
         
         if (False == self.is_sim):
         
@@ -92,13 +113,13 @@ class VectorTeleop:
             """
             self.config_updated = False
             rospy.Subscriber("/vector/feedback/active_configuration", Configuration, self._update_configuration_limits)
-            
-            start_time = rospy.get_time()            
+           
+            start_time = rospy.get_time()                   
             while ((rospy.get_time() - start_time) < 10.0) and (False == self.config_updated):
                 rospy.sleep(0.05)
             
             if (False == self.config_updated):
-                rospy.logerr("Timed out waiting for Vector feedback topics make sure the driver is running")
+                rospy.logerr("Timed out waiting for RMP feedback topics make sure the driver is running")
                 sys.exit(0)
                 return
         else:
@@ -108,23 +129,11 @@ class VectorTeleop:
             self.accel_lim = rospy.get_param('~sim_teleop_accel_lim',0.5)
             self.yaw_accel_lim = rospy.get_param('~sim_teleop_yaw_accel_lim',1.0)           
         
-        default_ctrl_map = dict({'momentary':[[{'is_button':True,'index':4,'set_val':1}],
-                                              [{'is_button':True,'index':8,'set_val':1}],
-                                              [{'is_button':True,'index':1,'set_val':1}],
-                                              [{'is_button':True,'index':2,'set_val':1}],
-                                              [{'is_button':True,'index':0,'set_val':1}],
-                                              [{'is_button':False,'index':6,'invert_axis':False,'set_thresh':0.9}],
-                                              [{'is_button':False,'index':7,'invert_axis':True,'set_thresh':0.9}],
-                                              [{'is_button':False,'index':2,'invert_axis':True,'set_thresh':0.9}],
-                                              [{'is_button':False,'index':5,'invert_axis':True,'set_thresh':0.9}]],
-                                 'axis_range':[{'index':1,'invert_axis':False},
-                                               {'index':0,'invert_axis':False},
-                                               {'index':3,'invert_axis':False}]})
+
         
         """
         Get the mapping for the various commands, defaults are xbox360 wireless
         """
-        self.ctrl_map = rospy.get_param('~controller_mapping',default_ctrl_map)
         
         """
         Initialize the debounce logic states
@@ -140,13 +149,20 @@ class VectorTeleop:
             
         self.cfg_cmd = ConfigCmd()
         self.cfg_pub = rospy.Publisher('/vector/gp_command', ConfigCmd, queue_size=10)
-        self.goalrecorder_pub = rospy.Publisher('/vector/record_pose',Bool, queue_size=10)
+        self.nav_cmd_pub = rospy.Publisher('/vector/waypoint_cmd',UInt32, queue_size=10)
         
         self.motion_cmd = Twist()
         self.limited_cmd = Twist()
         self.motion_pub = rospy.Publisher('/vector/teleop/cmd_vel', Twist, queue_size=10)
         self.override_pub = rospy.Publisher("/vector/manual_override/cmd_vel",Twist, queue_size=10)
 
+        rospy.sleep(1.0)
+        self.cfg_cmd.header.stamp = rospy.get_rostime()
+        self.cfg_pub.publish(self.cfg_cmd)
+        self.update_stop_state = True
+        self.stop_robot = 0
+        self.prev_nav_button_state = 0
+        
         rospy.Subscriber('/joy', Joy, self._vector_teleop)
         
     def _update_configuration_limits(self,config):
@@ -201,30 +217,53 @@ class VectorTeleop:
 
     def _vector_teleop(self, joyMessage):
         self._parse_joy_input(joyMessage)
-        if self.button_state[MAP_REC_GOAL_IDX] == 1:
-            if (False == self.goalrecorded):
-                temp = Bool()
-                temp.data = True
-                self.goalrecorder_pub.publish(temp)
-                self.goalrecorded= True
-        else:
-            self.goalrecorded= False                                  
+        
+        nav_button_state = 0
+        nav_button_state |= self.button_state[MAP_REC_WP_IDX]   << 0   #0x0001
+        nav_button_state |= self.button_state[MAP_START_WP_IDX] << 1 #0x0002
+        nav_button_state |= self.button_state[MAP_STOP_WP_IDX]  << 2  #0x0004      
+        nav_button_state |= self.button_state[MAP_RESET_WP_IDX] << 3 #0x0004
+        nav_button_state |= self.button_state[MAP_CLEAR_WP_IDX] << 4 #0x0010
+        
+        nav_button_state |= self.button_state[MAP_LOAD_WP_REC_IDX] << 5 #0x0011
+        nav_button_state |= self.button_state[MAP_SAVE_WP_REC_IDX] << 6 #0x0012
+        
+        if (self.prev_nav_button_state != nav_button_state):
+            if nav_button_state:
+                temp = UInt32()
+                temp.data = nav_button_state
+                self.nav_cmd_pub.publish(temp)
+            
+        self.prev_nav_button_state = nav_button_state 
 
-        if self.button_state[MAP_DTZ_IDX]:
-            self.cfg_cmd.gp_cmd = 'GENERAL_PURPOSE_CMD_SET_OPERATIONAL_MODE'
-            self.cfg_cmd.gp_param = DTZ_REQUEST
-        elif self.button_state[MAP_PWRDWN_IDX]:
-            self.cfg_cmd.gp_cmd = 'GENERAL_PURPOSE_CMD_SET_OPERATIONAL_MODE'
-            self.cfg_cmd.gp_param = STANDBY_REQUEST
-        elif self.button_state[MAP_STANDBY_IDX]:
+                                  
+        if self.button_state[MAP_STANDBY_IDX]:
             self.cfg_cmd.gp_cmd = 'GENERAL_PURPOSE_CMD_SET_OPERATIONAL_MODE'
             self.cfg_cmd.gp_param = STANDBY_REQUEST
         elif self.button_state[MAP_TRACTOR_IDX]:
             self.cfg_cmd.gp_cmd = 'GENERAL_PURPOSE_CMD_SET_OPERATIONAL_MODE'
             self.cfg_cmd.gp_param = TRACTOR_REQUEST
+        elif self.button_state[MAP_AUDIO_IDX]:
+            self.cfg_cmd.gp_cmd = 'GENERAL_PURPOSE_CMD_SET_AUDIO_COMMAND'
+            self.cfg_cmd.gp_param = self.audio_cmd_mapped
         else:
             self.cfg_cmd.gp_cmd = 'GENERAL_PURPOSE_CMD_NONE'
             self.cfg_cmd.gp_param = 0
+            
+        if self.button_state[MAP_STOP_ROBOT_IDX]:
+            if self.update_stop_state:
+                self.stop_robot ^= 1
+                print "stop state:  ",self.stop_robot
+                self.update_stop_state = False
+        else:
+            self.update_stop_state = True
+            
+        
+        if (self.stop_robot):
+            tmp = Twist()
+            self.override_pub.publish(tmp)
+                
+            
             
         if ('GENERAL_PURPOSE_CMD_NONE' != self.cfg_cmd.gp_cmd):
             self.cfg_cmd.header.stamp = rospy.get_rostime()

@@ -39,15 +39,15 @@ export VECTOR_USE_LSM_TO_CORRECT_ODOMETRY=true
 
 # Joystick configurations for joystick set VECTOR_JOY_IS_ATTACHED if the joystick
 # is physically attached to this PC
-export VECTOR_JOY_IS_ATTACHED=false
+export VECTOR_JOY_IS_ATTACHED=true
 export VECTOR_JOY_DEV=/dev/input/js0
-export VECTOR_JOY_MAPPING=extreme3D
+export VECTOR_JOY_MAPPING=xbox360
 export VECTOR_JOY_DEADZONE=0.1
 
 # laser configuration (only supports two by default)
 export VECTOR_LASER1_IP=10.66.171.8
 export VECTOR_LASER1_PORT=2112
-export LASER1_XYZ="0.3075 0 0.1439106"
+export LASER1_XYZ="0.3385 0 0.1439106"
 export LASER1_RPY="3.1415 0 0"
 export LASER1_MAX_RANGE=10.0
 export LASER1_MIN_RANGE=0.01
@@ -56,7 +56,7 @@ export LASER1_MIN_ANGLE=-2.0
 
 export VECTOR_LASER2_IP=10.66.171.9
 export VECTOR_LASER2_PORT=2112
-export LASER2_XYZ="-0.3075 0 0.1439106"
+export LASER2_XYZ="-0.3385 0 0.1439106"
 export LASER2_RPY="3.1415 0 3.1415"
 export LASER2_MAX_RANGE=10.0
 export LASER2_MIN_RANGE=0.01
