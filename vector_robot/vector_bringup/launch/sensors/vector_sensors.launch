@@ -96,6 +96,14 @@
         <remap from="/pose_with_covariance_stamped" to="/vector/lsm/pose"/>
     </node>
     
+    <node pkg="moxa_interface" type="moxa_modbus_driver" name="robot_io" clear_params="true" respawn="true" output="screen" if="$(optenv VECTOR_HAS_IO false)">
+        <param name="host_ip" value="$(optenv VECTOR_IO_IP 10.66.171.30)" />
+        <param name="prefix" value="vector_io"/>
+        <param name="host_port" value="$(optenv VECTOR_IO_PORT 502)"/>
+        <param name="timeout" value="2" />
+        <param name="update_rate_hz" value="5.0" />
+    </node>
+    
 </launch> 
     
     

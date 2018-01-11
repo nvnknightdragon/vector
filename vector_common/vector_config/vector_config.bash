@@ -63,4 +63,9 @@ export LASER2_MIN_RANGE=0.01
 export LASER2_MAX_ANGLE=2.0
 export LASER2_MIN_ANGLE=-2.0
 
+export VECTOR_HAS_IO=false
+export VECTOR_IO_IP=10.66.171.30
+export VECTOR_IO_PORT=502
+
+
 
