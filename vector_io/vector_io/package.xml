@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<package>
+  <name>vector_io</name>
+  <version>0.0.1</version>
+  <description>
+    Metapackage containing ROS drivers and nodes for expandable I/O modules for vector platforms.
+  </description>
+  <maintainer email="dev@stanleyinnovation.com">Patrick Hussey</maintainer>
+  <url type="website">http://ros.org/wiki/vector</url>
+
+  <license>BSD</license>
+
+  <url type="repository">https://github.com/stanley_innovation/segway_v3_desktop</url>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <run_depend>moxa_interface</run_depend>
+  <run_depend>moxa_msgs</run_depend>
+  <run_depend>si_utils</run_depend>
+
+  <export>
+    <architecture_independent/>
+    <metapackage/>
+  </export>
+</package>

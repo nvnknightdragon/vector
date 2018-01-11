@@ -1,0 +1,20 @@
+<package>
+    <name>moxa_msgs</name>
+    <version>0.0.1</version>
+    <description>Messages for Moxa IOlogik node</description>
+    
+    <maintainer email="RMP@stanleyinnovation.com">Stanley Innovation, Inc.</maintainer>
+    <license>BSD</license>
+    <url type="website">http://stanleyinnovation.com</url>
+    <author>Patrick Hussey</author>
+
+    <buildtool_depend>catkin</buildtool_depend>
+
+    <!-- Packages needed to build and run-->
+    <build_depend>message_generation</build_depend>
+    <run_depend>message_runtime</run_depend>  
+    <build_depend>std_msgs</build_depend>
+    <run_depend>std_msgs</run_depend>
+	<export>
+	</export>
+</package>
