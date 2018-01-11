@@ -29,10 +29,6 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
 	
         <!-- Base link is the center of the robot's chassis between the motors projected on the ground -->
         <link name="base_link"/>
-        
-        <gazebo reference="base_link">
-            <mu1>0.0</mu1>
-        </gazebo>
 		        
         <joint name="base_chassis_joint" type="fixed">
             <origin xyz="0 0 ${wheel_radius}" rpy="0 0 0" />
@@ -41,13 +37,13 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
         </joint>
         
         <link name="base_chassis_link">
-			<inertial>
-				<mass value="44.2877" />
-				<origin xyz="-0.009506 -0.013039 0.032319" />
-				<inertia ixx="0.000165"  ixy="0" ixz="0"
-                         iyx="0"  iyy="0.000559" iyz="0"
-                         izx="0" izy="0" izz="0.000714" />
-			</inertial>
+	    <inertial>
+		    <mass value="101.561195" />
+		    <origin xyz="-0.000710 -0.000186 0.03813" rpy="0 0 0"/>
+		    <inertia ixx="3.126061"  ixy="-0.032687" ixz="-0.086662"
+                         iyx="-0.032687" iyy="13.356772" iyz="0.000468"
+                         izx="-0.086662" izy="0.000468"  izz="15.218700" />
+	    </inertial>
             <collision>
 				<geometry>
 					<mesh filename="package://vector_description/meshes/vector_components/collision/vector_base_collision.stl" />
@@ -62,7 +58,11 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
 		</link>
 		
         <gazebo reference="base_chassis_link">
-            <mu1>0.0</mu1>
+			<mu1 value="0.1"/>
+			<mu2 value="0.1"/>
+			<kp value="10000000.0" />
+			<kd value="1.0" />
+			<fdir1 value="1 0 0"/>
         </gazebo>
         
         <joint name="payload_plate_joint" type="fixed">
@@ -93,7 +93,14 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
 			</visual>
 		</link>
 		
-	
+        <gazebo reference="payload_plate_joint">
+			<mu1 value="0.1"/>
+			<mu2 value="0.1"/>
+			<kp value="10000000.0" />
+			<kd value="1.0" />
+			<fdir1 value="1 0 0"/>
+        </gazebo>
+        	
 		
     </xacro:macro>
 

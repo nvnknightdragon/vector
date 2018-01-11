@@ -1,7 +1,7 @@
 <!-- 2D Map navigation Demo -->
 
 <launch>
-    <arg name="map_file" default="playpen_map"/>
+    <arg name="map_file" default="cafe"/>
     <arg name="use_waypoints" default="false"/>
     <arg name="sim" default="false"/>
 

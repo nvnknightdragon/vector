@@ -204,8 +204,8 @@ class VectorMarkerControl:
         self.last_marker_update = rospy.get_time()
         self.last_feedback = None
         
-        self.linear_scale = rospy.get_param('~linear_scale', 1.0);
-        self.angular_scale = rospy.get_param('~angular_scale', 2.2);
+        self.linear_scale = rospy.get_param('~linear_scale', 1.0)
+        self.angular_scale = rospy.get_param('~angular_scale', 2.2)
         
         self.motion_cmd = Twist()
         self.motion_pub = rospy.Publisher('/vector/int_marker/cmd_vel', Twist, queue_size=10)
@@ -217,33 +217,33 @@ class VectorMarkerControl:
         int_marker.description = "vector Control Marker"
         
         control = InteractiveMarkerControl()
-        control.orientation_mode = InteractiveMarkerControl.FIXED;
-        control.orientation.w = 1;
-        control.orientation.x = 1;
-        control.orientation.y = 0;
-        control.orientation.z = 0;
-        control.name = "move_x";
-        control.interaction_mode = InteractiveMarkerControl.MOVE_AXIS;
+        control.orientation_mode = InteractiveMarkerControl.FIXED
+        control.orientation.w = 0.707106781
+        control.orientation.x = 0.707106781
+        control.orientation.y = 0
+        control.orientation.z = 0
+        control.name = "move_x"
+        control.interaction_mode = InteractiveMarkerControl.MOVE_AXIS
         int_marker.controls.append( control )
         
         control = InteractiveMarkerControl()
-        control.orientation_mode = InteractiveMarkerControl.FIXED;
-        control.orientation.w = 1;
-        control.orientation.x = 0;
-        control.orientation.y = 0;
-        control.orientation.z = 1;
-        control.name = "move_y";
-        control.interaction_mode = InteractiveMarkerControl.MOVE_AXIS;
+        control.orientation_mode = InteractiveMarkerControl.FIXED
+        control.orientation.w = 0.707106781
+        control.orientation.x = 0
+        control.orientation.y = 0
+        control.orientation.z = 0.707106781
+        control.name = "move_y"
+        control.interaction_mode = InteractiveMarkerControl.MOVE_AXIS
         int_marker.controls.append( control )
 
         control = InteractiveMarkerControl()
-        control.orientation_mode = InteractiveMarkerControl.FIXED;
-        control.orientation.w = 1;
-        control.orientation.x = 0;
-        control.orientation.y = 1;
-        control.orientation.z = 0;
-        control.name = "rotate_z";
-        control.interaction_mode = InteractiveMarkerControl.ROTATE_AXIS;
+        control.orientation_mode = InteractiveMarkerControl.FIXED
+        control.orientation.w = 0.707106781
+        control.orientation.x = 0
+        control.orientation.y = 0.707106781
+        control.orientation.z = 0
+        control.name = "rotate_z"
+        control.interaction_mode = InteractiveMarkerControl.ROTATE_AXIS
         int_marker.controls.append( control ) 
 
         # add the interactive marker to our collection &
