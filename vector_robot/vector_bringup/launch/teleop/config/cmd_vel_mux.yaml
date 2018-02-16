@@ -14,7 +14,7 @@ subscribers:
 
   - name:        "Manual Override"
     topic:       "/vector/manual_override/cmd_vel"
-    timeout:     2.0
+    timeout:     0.1
     priority:    4
 
   - name:        "Assisted Teleop"
