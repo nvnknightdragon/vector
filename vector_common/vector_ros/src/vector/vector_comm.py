@@ -243,21 +243,7 @@ class VectorDriver:
             self.summer+=1.0/(rospy.Time.now().to_sec() - self.last_rsp_rcvd)
             self.avg_freq = self.summer/self.samp
         self.last_rsp_rcvd = rospy.Time.now().to_sec()
-                        
-    def _handle_rsp(self,data_bytes):
-    
-        while not self.need_to_terminate:
-            """
-            Run until signaled to stop
-            Perform the actions defined based on the flags passed out
-            """
-            result = select.select([self.rx_queue_._reader],[],[],1.0)
-            if len(result[0]) > 0:
-                data = result[0][0].recv()
-                with self.terminate_mutex:
-                    if not self.need_to_terminate:
-                        self._handle_rsp(data)
-                        
+        
     def _handle_rsp(self,data_bytes):
         if (True == self.flush_rcvd_data):
             return
