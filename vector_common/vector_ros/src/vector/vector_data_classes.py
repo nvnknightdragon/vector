@@ -235,7 +235,10 @@ class Vector_Dynamics:
         self._jointStateMsg.header.frame_id = ''
         
         try:
-            self.use_lsm_for_odom = bool(os.environ['VECTOR_USE_LSM_TO_CORRECT_ODOMETRY'])
+            if os.environ['VECTOR_USE_LSM_TO_CORRECT_ODOMETRY'] == 'true':
+                self.use_lsm_for_odom = True
+            else:
+                self.use_lsm_for_odom = False
         except:
             self.use_lsm_for_odom = False
 
