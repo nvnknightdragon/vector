@@ -27,9 +27,30 @@
 @# Please send comments, questions, or patches to code@clearpathrobotics.com
 #!/bin/bash
 # THIS IS A GENERATED FILE, NOT RECOMMENDED TO EDIT.
+# THE TEMPLATE HAS BEEN MODIFIED SPECIFICALLY FOR WAYPOINT VECTOR
 
 function log() {
   logger -s -p user.$1 ${@@:2}
+}
+
+function ping_peripheral()
+{
+  temp=1
+  cnts=0
+  while [ $cnts -lt 100 ] && [ $temp -ne 0 ]; do
+    ping -q -c 1 -W 1 $1 >/dev/null
+    temp=$?
+    cnts=$[$cnts+1]
+    if [ $temp -ne 0 ]; then
+      sleep 1
+    fi
+  done  
+
+  if [ $temp -ne 0 ]; then
+    echo "Unable to ping $2 at $1."
+  else
+    echo "Successfully pinged $2 at $1." 
+  fi
 }
 
 log info "@(name): Using workspace setup file @(workspace_setup)"
@@ -67,23 +88,10 @@ export ROS_MASTER_URI=@(master_uri)
 @[else]@
 export ROS_MASTER_URI=http://127.0.0.1:11311
 @[end if]@
+export ROS_HOME=${ROS_HOME:=$(echo ~@(user))/.ros}
+export ROS_LOG_DIR=$log_path
 
-log info "@(name): Launching ROS_HOSTNAME=$ROS_HOSTNAME, ROS_IP=$ROS_IP, ROS_MASTER_URI=$ROS_MASTER_URI, ROS_LOG_DIR=$log_path"
-
-# If xacro files are present in job folder, generate and expand an amalgamated urdf.
-XACRO_FILENAME=$log_path/@(name).xacro
-XACRO_ROBOT_NAME=$(echo "@(name)" | cut -d- -f1)
-rosrun vector_upstart mkxacro $JOB_FOLDER $XACRO_ROBOT_NAME > $XACRO_FILENAME
-if [[ "$?" == "0" ]]; then
-  URDF_FILENAME=$log_path/@(name).urdf
-  rosrun xacro xacro $XACRO_FILENAME -o $URDF_FILENAME
-  if [[ "$?" == "0" ]]; then
-    log info "@(name): Generated URDF: $URDF_FILENAME"
-  else
-    log warn "@(name): URDF macro expansion failure. Robot description will not function."
-  fi
-  export ROBOT_URDF_FILENAME=$URDF_FILENAME
-fi
+log info "@(name): Launching ROS_HOSTNAME=$ROS_HOSTNAME, ROS_IP=$ROS_IP, ROS_MASTER_URI=$ROS_MASTER_URI, ROS_HOME=$ROS_HOME, ROS_LOG_DIR=$log_path"
 
 # Assemble amalgamated launchfile.
 LAUNCH_FILENAME=$log_path/@(name).launch
@@ -101,9 +109,11 @@ if [ "$?" != "0" ]; then
   exit 1
 fi
 
+ping_peripheral 10.66.171.5 VECTOR
+ping_peripheral 10.66.171.8 FRONT_LASER
+ping_peripheral 10.66.171.9 REAR_LASER
+
 # Punch it.
-export ROS_HOME=$(echo ~@(user))/.ros
-export ROS_LOG_DIR=$log_path
 setuidgid @(user) roslaunch $LAUNCH_FILENAME @(roslaunch_wait?'--wait ')&
 PID=$!
 
