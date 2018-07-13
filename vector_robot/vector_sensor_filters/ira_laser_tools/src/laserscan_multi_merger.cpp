@@ -50,6 +50,7 @@ private:
     double scan_time;
     double range_min;
     double range_max;
+    ros::Time combined_scan_timestamp;
 
     string destination_frame;
     string cloud_destination_topic;
@@ -158,6 +159,8 @@ void LaserscanMerger::scanCallback(const sensor_msgs::LaserScan::ConstPtr& scan,
 {
 	sensor_msgs::PointCloud tmpCloud1,tmpCloud2;
 	sensor_msgs::PointCloud2 tmpCloud3;
+	static bool is_first_scan = true;
+	static ros::Time first_scan_time;
 
     // Verify that TF knows how to transform from the received scan to the destination scan frame
 	tfListener_.waitForTransform(scan->header.frame_id.c_str(), destination_frame.c_str(), scan->header.stamp, ros::Duration(1));
@@ -183,6 +186,12 @@ void LaserscanMerger::scanCallback(const sensor_msgs::LaserScan::ConstPtr& scan,
 	for(int i=0; i<clouds_modified.size(); ++i)
 		if(clouds_modified[i])
 			++totalClouds;
+			
+    if (true == is_first_scan)
+    {
+        first_scan_time = scan->header.stamp;
+        is_first_scan = false;
+    }    
 
     // Go ahead only if all subscribed scans have arrived
 	if(totalClouds == clouds_modified.size())
@@ -195,6 +204,9 @@ void LaserscanMerger::scanCallback(const sensor_msgs::LaserScan::ConstPtr& scan,
 			pcl::concatenatePointCloud(merged_cloud, clouds[i], merged_cloud);
 			clouds_modified[i] = false;
 		}
+		
+		combined_scan_timestamp = first_scan_time + (scan->header.stamp - first_scan_time)*0.5;
+		is_first_scan = true;
 	
 		point_cloud_publisher_.publish(merged_cloud);
 
@@ -202,6 +214,7 @@ void LaserscanMerger::scanCallback(const sensor_msgs::LaserScan::ConstPtr& scan,
 		getPointCloudAsEigen(merged_cloud,points);
 
 		pointcloud_to_laserscan(points, &merged_cloud);
+		
 	}
 }
 
@@ -210,7 +223,7 @@ void LaserscanMerger::pointcloud_to_laserscan(Eigen::MatrixXf points, pcl::PCLPo
 	sensor_msgs::LaserScanPtr output(new sensor_msgs::LaserScan());
 	output->header = pcl_conversions::fromPCL(merged_cloud->header);
 	output->header.frame_id = destination_frame.c_str();
-	output->header.stamp = ros::Time::now();  //fixes #265
+	output->header.stamp = combined_scan_timestamp;//ros::Time::now();  //fixes #265
 	output->angle_min = this->angle_min;
 	output->angle_max = this->angle_max;
 	output->angle_increment = this->angle_increment;
