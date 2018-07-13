@@ -25,6 +25,7 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
 -->
 <robot name="vector_accessories" xmlns:xacro="http://ros.org/wiki/xacro">
     <xacro:include filename="$(find vector_description)/urdf/sensors/sick_tim.urdf.xacro"/>
+    <xacro:include filename="$(find vector_description)/urdf/sensors/hokuyo_uam_05lp.urdf.xacro"/>
 
     <xacro:property name="M_PI" value="3.14159"/>
     
@@ -52,14 +53,24 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
             </plugin>
         </gazebo>
             
-        <xacro:sick_tim laser_prefix="front" parent="base_chassis_link">
-            <origin xyz="$(optenv LASER1_XYZ 0.3075 0 0.1439106)" rpy="$(optenv LASER1_RPY 3.14159 0 0)" />
-        </xacro:sick_tim>
-        
-        
-        <xacro:sick_tim laser_prefix="rear" parent="base_chassis_link">
-            <origin xyz="$(optenv LASER2_XYZ -0.3075 0 0.1439106)" rpy="$(optenv LASER2_RPY 3.14159 0 3.14159)" />
-        </xacro:sick_tim>
+        <xacro:unless value="$(optenv VECTOR_HAS_SAFETY_LASERS false)">
+            <xacro:sick_tim laser_prefix="front" parent="base_chassis_link">
+                <origin xyz="0.3075 0 0.1439106" rpy="3.14159 0 0" />
+            </xacro:sick_tim>
+            
+            <xacro:sick_tim laser_prefix="rear" parent="base_chassis_link">
+                <origin xyz="-0.3075 0 0.1439106" rpy="3.14159 0 3.14159" />
+            </xacro:sick_tim>
+        </xacro:unless>
 
+        <xacro:if value="$(optenv VECTOR_HAS_SAFETY_LASERS false)">
+            <xacro:hokuyo_uam_05lp laser_prefix="front" parent="base_chassis_link">
+                <origin xyz="0.252995 0.192212 0.137128" rpy="${M_PI} 0 ${M_PI/4}"/>
+            </xacro:hokuyo_uam_05lp>
+            
+            <xacro:hokuyo_uam_05lp laser_prefix="rear" parent="base_chassis_link">
+                <origin xyz="-0.252995 -0.192212 0.137128" rpy="${M_PI} 0 ${5*M_PI/4}" />
+            </xacro:hokuyo_uam_05lp>
+        </xacro:if>
     </xacro:macro>
 </robot>
