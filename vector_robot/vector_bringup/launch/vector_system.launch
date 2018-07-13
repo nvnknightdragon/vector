@@ -10,11 +10,6 @@
     <node pkg="si_utils" type="timed_roslaunch"
         args="3 vector_bringup vector_sensors.launch"
         name="sensor_bringup" output="screen"/>
-
-    <!-- Platform specific odometry estimate -->
-    <node pkg="si_utils" type="timed_roslaunch"
-        args="5 vector_bringup vector_odometry.launch"
-        name="odometry_bringup" output="screen"/>
         
     <!-- Platform Teleoperation -->
     <node pkg="si_utils" type="timed_roslaunch"

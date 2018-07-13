@@ -5,35 +5,35 @@
     <group unless="$(optenv VECTOR_HAS_SAFETY_LASERS false)">
         <node pkg="sick_tim" type="sick_tim551_2050001" name="front_laser_node" clear_params="true" respawn="true">
             <remap from="scan" to="/vector/front_scan" />
-            <param name="max_ang" value="$(optenv LASER1_MAX_ANGLE 2.35619449019)"/>
-            <param name="min_ang" value="$(optenv LASER1_MIN_ANGLE -2.35619449019)"/>
-            <param name="intensity" type="bool" value="True" />
+            <param name="max_ang" value="2.35619449019"/>
+            <param name="min_ang" value="-2.35619449019"/>
+            <param name="intensity" type="bool" value="true" />
             <param name="skip" type="int" value="0" />
             <param name="frame_id" type="str" value="front_laser_link" />
             <param name="time_offset" type="double" value="-0.001" />
-            <param name="publish_datagram" type="bool" value="False" />
+            <param name="publish_datagram" type="bool" value="false" />
             <param name="subscribe_datagram" type="bool" value="false" />
             <param name="range_min" type="double" value="$(optenv LASER1_MIN_RANGE 0.05)" />
             <param name="range_max" type="double" value="$(optenv LASER1_MAX_RANGE 10.0)" />
-            <param name="hostname" type="string" value="$(optenv VECTOR_LASER1_IP 10.66.171.8)" />
-            <param name="port" type="string" value="$(optenv VECTOR_LASER1_PORT 2112)" />
+            <param name="hostname" type="string" value="10.66.171.8" />
+            <param name="port" type="string" value="VECTOR_LASER1_PORT 2112" />
             <param name="timelimit" type="int" value="5" />
         </node>
 
-        <node pkg="sick_tim" type="sick_tim551_2050001" name="$(optenv LASER2_PREFIX rear)_laser_node" respawn="false">
-            <remap from="scan" to="/vector/$(optenv LASER2_PREFIX rear)_scan" />
-            <param name="max_ang" value="$(optenv LASER2_MAX_ANGLE 2.35619449019)"/>
-            <param name="min_ang" value="$(optenv LASER2_MIN_ANGLE -2.35619449019)"/>
-            <param name="intensity" type="bool" value="True" />
+        <node pkg="sick_tim" type="sick_tim551_2050001" name="rear_laser_node" respawn="false">
+            <remap from="scan" to="/vector/rear_scan" />
+            <param name="max_ang" value="2.35619449019"/>
+            <param name="min_ang" value="-2.35619449019"/>
+            <param name="intensity" type="bool" value="true" />
             <param name="skip" type="int" value="0" />
-            <param name="frame_id" type="str" value="$(optenv LASER2_PREFIX rear)_laser_link" />
+            <param name="frame_id" type="str" value="rear_laser_link" />
             <param name="time_offset" type="double" value="-0.001" />
-            <param name="publish_datagram" type="bool" value="False" />
+            <param name="publish_datagram" type="bool" value="false" />
             <param name="subscribe_datagram" type="bool" value="false" />
-            <param name="range_min" type="double" value="$(optenv LASER2_MIN_RANGE 0.05)" />
+            <param name="range_min" type="double" value="$(optenv LASER1_MIN_RANGE 0.05)" />
             <param name="range_max" type="double" value="$(optenv LASER2_MAX_RANGE 10.0)" />
-            <param name="hostname" type="string" value="$(optenv VECTOR_LASER2_IP 10.66.171.9)" />
-            <param name="port" type="string" value="$(optenv VECTOR_LASER2_PORT 2112)" />
+            <param name="hostname" type="string" value="10.66.171.9" />
+            <param name="port" type="string" value="2112" />
             <param name="timelimit" type="int" value="5" />
             <!-- Older versions of the scanner firmware report an incorrect time_increment.
              If you get a warning about time_increment, uncomment this. -->
@@ -43,7 +43,7 @@
 
     <group if="$(optenv VECTOR_HAS_SAFETY_LASERS false)">
         <node name="front_laser_node" pkg="urg_node" type="urg_node" output="screen">
-            <remap from="/scan" to="/segway/front_scan"/>
+            <remap from="/scan" to="/vector/front_scan"/>
             <remap from="/laser_status" to="/front_laser_status"/>
             <param name="ip_address" value="10.66.171.8"/>
             <param name="frame_id" value="front_laser_link"/>
@@ -55,7 +55,7 @@
         </node>
         
         <node name="rear_laser_node" pkg="urg_node" type="urg_node" output="screen">
-            <remap from="/scan" to="rear_scan"/>
+            <remap from="/scan" to="/vector/rear_scan"/>
             <remap from="/laser_status" to="/rear_laser_status"/>
             <param name="ip_address" value="10.66.171.9"/>
             <param name="frame_id" value="rear_laser_link"/>
