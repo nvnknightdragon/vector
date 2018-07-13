@@ -72,10 +72,9 @@ MAP_CLEAR_WP_IDX    = 6
 MAP_STOP_ROBOT_IDX  = 7
 MAP_LOAD_WP_REC_IDX = 8
 MAP_SAVE_WP_REC_IDX = 9
-MAP_AUDIO_IDX       = 10
-MAP_DEADMAN_IDX     = 11
-MAP_MAN_OVVRD_IDX   = 12
-NUMBER_OF_MOMENTARY_INPUTS = 13
+MAP_DEADMAN_IDX     = 10
+MAP_MAN_OVVRD_IDX   = 11
+NUMBER_OF_MOMENTARY_INPUTS = 12
 
 
 MAP_TWIST_LIN_X_IDX = 0
@@ -98,7 +97,6 @@ class VectorTeleop:
                                            [{'is_button':True,'index':4,'set_val':1}],
                                            [{'is_button':True,'index':5,'set_val':1}],
                                            [{'is_button':False,'index':7,'invert_axis':False,'set_thresh':0.9}],
-                                           [{'is_button':False,'index':7,'invert_axis':True,'set_thresh':0.9}],
                                            [{'is_button':False,'index':6,'invert_axis':False,'set_thresh':0.9}],
                                            [{'is_button':False,'index':2,'invert_axis':True,'set_thresh':0.9}],
                                            [{'is_button':False,'index':5,'invert_axis':True,'set_thresh':0.9}]],
@@ -158,6 +156,8 @@ class VectorTeleop:
 
         rospy.sleep(1.0)
         self.cfg_cmd.header.stamp = rospy.get_rostime()
+        self.cfg_cmd.gp_cmd = "GENERAL_PURPOSE_CMD_SET_OPERATIONAL_MODE"
+        self.cfg_cmd.gp_param = STANDBY_REQUEST
         self.cfg_pub.publish(self.cfg_cmd)
         self.update_stop_state = True
         self.stop_robot = 0
@@ -243,9 +243,6 @@ class VectorTeleop:
         elif self.button_state[MAP_TRACTOR_IDX]:
             self.cfg_cmd.gp_cmd = 'GENERAL_PURPOSE_CMD_SET_OPERATIONAL_MODE'
             self.cfg_cmd.gp_param = TRACTOR_REQUEST
-        elif self.button_state[MAP_AUDIO_IDX]:
-            self.cfg_cmd.gp_cmd = 'GENERAL_PURPOSE_CMD_SET_AUDIO_COMMAND'
-            self.cfg_cmd.gp_param = self.audio_cmd_mapped
         else:
             self.cfg_cmd.gp_cmd = 'GENERAL_PURPOSE_CMD_NONE'
             self.cfg_cmd.gp_param = 0
