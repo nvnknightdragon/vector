@@ -161,13 +161,18 @@ class Vector_IMU(object):
     def parse_data(self,data,header_stamp):
         self._MsgData.header.stamp = header_stamp
         self._MsgData.header.seq = self._seq
-        self._MsgData.orientation.w = 0
-        self._MsgData.orientation.x = 0
-        self._MsgData.orientation.y = 0
-        self._MsgData.orientation.z = 0
-        self._MsgData.orientation_covariance[0] = 99999999.0
-        self._MsgData.orientation_covariance[4] = 99999999.0
-        self._MsgData.orientation_covariance[8] = 99999999.0
+        p = convert_u32_to_float(data[10])
+        r = convert_u32_to_float(data[11])
+        y = convert_u32_to_float(data[12])
+        rot = tf.transformations.quaternion_from_euler(r,p,y)
+        
+        self._MsgData.orientation.x = rot[0]
+        self._MsgData.orientation.y = rot[1]
+        self._MsgData.orientation.z = rot[2]
+        self._MsgData.orientation.w = rot[3]
+        self._MsgData.orientation_covariance[0] = 0.035 * 0.035
+        self._MsgData.orientation_covariance[4] = 0.035 * 0.035
+        self._MsgData.orientation_covariance[8] = 0.035 * 0.035
         
         self._MsgData.linear_acceleration.x =  convert_u32_to_float(data[0])
         self._MsgData.linear_acceleration.y =  convert_u32_to_float(data[1]) 
@@ -225,82 +230,45 @@ class Vector_IMU(object):
 
 class Vector_Dynamics:
     def __init__(self):
-        self._use_platform_odometry = rospy.get_param('~use_platform_odometry',True)
         self._MsgData = Dynamics()
         self._MsgPub = rospy.Publisher('/vector/feedback/dynamics', Dynamics, queue_size=10)
         self._jointStatePub = rospy.Publisher('/vector/joint_states', JointState, queue_size=10)
         self._jointStateMsg = JointState()
         self._jointStateMsg.name = ['linear_joint']
         self._MsgData.header.frame_id = ''
-        self._jointStateMsg.header.frame_id = ''
-        
-        try:
-            if os.environ['VECTOR_USE_LSM_TO_CORRECT_ODOMETRY'] == 'true':
-                self.use_lsm_for_odom = True
-            else:
-                self.use_lsm_for_odom = False
-        except:
-            self.use_lsm_for_odom = False
-
-        self._OdomData1 = Odometry()
-        self._OdomData2 = Odometry()
+        self._jointStateMsg.header.frame_id = ''  
+        self._OdomData = Odometry()
         self._OdomPub1 = rospy.Publisher('/vector/feedback/wheel_odometry', Odometry, queue_size=10)
-        if (False == self._use_platform_odometry):
-            rospy.Subscriber('/vector/odometry/local_filtered', Odometry, self._update_odom_yaw)
-        elif (True == self.use_lsm_for_odom):
-            self._OdomPub2 = rospy.Publisher('/vector/odometry/local_filtered', Odometry, queue_size=10)
-            self.has_recved_lsm = False
-            rospy.Subscriber('/vector/lsm/pose', PoseWithCovarianceStamped, self._update_lsm_odom)
-            
-        else:
-            self._OdomPub2 = rospy.Publisher('/vector/odometry/local_filtered', Odometry, queue_size=10)            
+        self._OdomPub2 = rospy.Publisher('/vector/odometry/local_filtered', Odometry, queue_size=10)     
         
         
-        self._OdomData1.header.frame_id = 'odom'
-        self._OdomData1.child_frame_id  = 'base_link'
+        self._OdomData.header.frame_id = 'odom'
+        self._OdomData.child_frame_id  = 'base_link'
         
         
-        self._OdomData1.pose.covariance = [0.00017,0.0,0.0,0.0,0.0,0.0,
+        self._OdomData.pose.covariance = [0.00017,0.0,0.0,0.0,0.0,0.0,
                                           0.0,0.00017,0.0,0.0,0.0,0.0,
                                           0.0,0.0,0.00017,0.0,0.0,0.0,
                                           0.0,0.0,0.0,0.00000,0.0,0.0,
                                           0.0,0.0,0.0,0.0,0.00000,0.0,
                                           0.0,0.0,0.0,0.0,0.0,0.00017]
              
-        self._OdomData1.twist.covariance = [0.00017,0.0,0.0,0.0,0.0,0.0,
+        self._OdomData.twist.covariance = [0.00017,0.0,0.0,0.0,0.0,0.0,
                                            0.0,0.00017,0.0,0.0,0.0,0.0,
                                            0.0,0.0,0.00017,0.0,0.0,0.0,
                                            0.0,0.0,0.0,0.00000,0.0,0.0,
                                            0.0,0.0,0.0,0.0,0.00000,0.0,
                                            0.0,0.0,0.0,0.0,0.0,0.00017]
-                                           
-                                           
-        self._OdomData2.header.frame_id = self._OdomData1.header.frame_id
-        self._OdomData2.child_frame_id = self._OdomData1.child_frame_id
-        self._OdomData2.pose.covariance = self._OdomData1.pose.covariance
-        self._OdomData2.twist.covariance = self._OdomData1.twist.covariance
-        
-        
-        self._seq = 0
-        
-    def _update_lsm_odom(self,msg):
-        self.has_recved_lsm = True
-        self._OdomData2.pose = msg.pose
-        self.lsm_rot = (msg.pose.pose.orientation.x, msg.pose.pose.orientation.y, msg.pose.pose.orientation.z, msg.pose.pose.orientation.w)
-        self.lsm_pos = (msg.pose.pose.position.x,msg.pose.pose.position.y,0.0)
-        
 
-    def _update_odom_yaw(self,msg):
-        (r, p, y) = tf.transformations.euler_from_quaternion([msg.pose.pose.orientation.x, msg.pose.pose.orientation.y, msg.pose.pose.orientation.z, msg.pose.pose.orientation.w])
-        self._MsgData.odom_yaw_angle_rad = ( y + math.pi) % (2 * math.pi ) - math.pi
+        self._seq = 0
 
     def parse(self,data,header_stamp,wheel_circum):
         
         self._MsgData.header.stamp = header_stamp
         self._MsgData.header.seq = self._seq
         
-        self._OdomData1.header.stamp = header_stamp
-        self._OdomData1.header.seq = self._seq
+        self._OdomData.header.stamp = header_stamp
+        self._OdomData.header.seq = self._seq
         
         self._jointStateMsg.header.stamp = header_stamp
         self._jointStateMsg.header.seq = self._seq
@@ -334,66 +302,45 @@ class Vector_Dynamics:
         self._MsgData.x_accel_mps2 = convert_u32_to_float(data[18])
         self._MsgData.y_accel_mps2 = convert_u32_to_float(data[19])
         self._MsgData.yaw_accel_mps2 = convert_u32_to_float(data[20])
-        self._OdomData1.twist.twist.linear.x = convert_u32_to_float(data[21])
-        self._OdomData1.twist.twist.linear.y = convert_u32_to_float(data[22])
-        self._OdomData1.twist.twist.linear.z = 0.0
-        self._OdomData1.twist.twist.angular.x = 0.0
-        self._OdomData1.twist.twist.angular.y = 0.0
-        self._OdomData1.twist.twist.angular.z = convert_u32_to_float(data[23])
-        self._OdomData1.pose.pose.position.x = convert_u32_to_float(data[24])
-        self._OdomData1.pose.pose.position.y = convert_u32_to_float(data[25])
-        self._OdomData1.pose.pose.position.z = 0.0
+        self._OdomData.twist.twist.linear.x = convert_u32_to_float(data[21])
+        self._OdomData.twist.twist.linear.y = convert_u32_to_float(data[22])
+        self._OdomData.twist.twist.linear.z = 0.0
+        self._OdomData.twist.twist.angular.x = 0.0
+        self._OdomData.twist.twist.angular.y = 0.0
+        self._OdomData.twist.twist.angular.z = convert_u32_to_float(data[23])
+        self._OdomData.pose.pose.position.x = convert_u32_to_float(data[24])
+        self._OdomData.pose.pose.position.y = convert_u32_to_float(data[25])
+        self._OdomData.pose.pose.position.z = 0.0
         
-        y = convert_u32_to_float(data[26]) 
-        y = ( y + math.pi) % (2 * math.pi ) - math.pi
-        self._MsgData.yaw_angle_rad = y
-        rot = tf.transformations.quaternion_from_euler(0,0,convert_u32_to_float(data[26]))
-        self._OdomData1.pose.pose.orientation.x = rot[0]
-        self._OdomData1.pose.pose.orientation.y = rot[1]
-        self._OdomData1.pose.pose.orientation.z = rot[2]
-        self._OdomData1.pose.pose.orientation.w = rot[3]
+        yaw_ang_rad = convert_u32_to_float(data[26])
+        self._MsgData.yaw_angle_rad = yaw_ang_rad
+        self._MsgData.odom_yaw_angle_rad = yaw_ang_rad
+        rot = tf.transformations.quaternion_from_euler(0,0,yaw_ang_rad)
+        self._OdomData.pose.pose.orientation.x = rot[0]
+        self._OdomData.pose.pose.orientation.y = rot[1]
+        self._OdomData.pose.pose.orientation.z = rot[2]
+        self._OdomData.pose.pose.orientation.w = rot[3]
         
-        x = self._OdomData1.pose.pose.position.x
-        y = self._OdomData1.pose.pose.position.y
-        z = self._OdomData1.pose.pose.position.z             
+        x = self._OdomData.pose.pose.position.x
+        y = self._OdomData.pose.pose.position.y
+        z = self._OdomData.pose.pose.position.z             
 
-        
         self._jointStateMsg.velocity = joint_vel
         self._jointStateMsg.position = joint_pos
 
         if not rospy.is_shutdown():
-            self._OdomPub1.publish(self._OdomData1)
+            self._OdomPub1.publish(self._OdomData)
+            self._OdomPub2.publish(self._OdomData)
             self._MsgPub.publish(self._MsgData)
             self._jointStatePub.publish(self._jointStateMsg)
-            if (True == self._use_platform_odometry) and (False == self.use_lsm_for_odom):
-                self._update_odom_yaw(self._OdomData1)
-                self._OdomData2 = self._OdomData1
-                self._OdomPub2.publish(self._OdomData2)        
-                br = tf.TransformBroadcaster()
-                br.sendTransform((x,y,z),
-                                 rot,
-                                 header_stamp,
-                                 "base_link",
-                                 "odom") 
+            br = tf.TransformBroadcaster()
+            br.sendTransform((x,y,z),
+                             rot,
+                             header_stamp,
+                             "base_link",
+                             "odom") 
 
-                self._seq += 1
-            elif (True == self.use_lsm_for_odom) and (True == self._use_platform_odometry) and (True == self.has_recved_lsm):
-                self._OdomData2.header.stamp = header_stamp
-                self._OdomData2.header.seq += 1
-                self._OdomData2.twist.twist.linear.x = self._OdomData1.twist.twist.linear.x #dxdt
-                self._OdomData2.twist.twist.linear.y = self._OdomData1.twist.twist.linear.y #dydt
-                self._OdomData2.twist.twist.linear.z = 0.0
-                self._OdomData2.twist.twist.angular.x = 0.0
-                self._OdomData2.twist.twist.angular.y = 0.0
-                self._OdomData2.twist.twist.angular.z = self._OdomData1.twist.twist.angular.z #dwdt
-                self._update_odom_yaw(self._OdomData2)
-                self._OdomPub2.publish(self._OdomData2)        
-                br = tf.TransformBroadcaster()
-                br.sendTransform(self.lsm_pos,
-                                 self.lsm_rot,
-                                 header_stamp,
-                                 "base_link",
-                                 "odom")               
+            self._seq += 1
 
 class Vector_Configuration:
     def __init__(self):   
