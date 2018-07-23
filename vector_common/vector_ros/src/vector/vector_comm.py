@@ -50,6 +50,7 @@ arising out of or based upon:
 from system_defines import *
 from utils import *
 from vector_msgs.msg import *
+from std_msgs.msg import Empty
 from geometry_msgs.msg import Twist
 from vector_ros.cfg import vectorConfig
 from dynamic_reconfigure.server import Server
@@ -141,11 +142,15 @@ class VectorDriver:
         """
         Initialize the publishers and subscribers for the node
         """
-        self.faultlog_pub = rospy.Publisher('/vector/feedback/faultlog', Faultlog, queue_size=10,latch=True)
-        rospy.Subscriber("/vector/cmd_vel", Twist, self._add_motion_command_to_queue)
-        rospy.Subscriber("/vector/gp_command",ConfigCmd,self._add_config_command_to_queue)
-        rospy.Subscriber("/move_base/DWAPlannerROS/parameter_updates",Config,self._update_move_base_params)
-        rospy.Subscriber("/vector/motion_test_cmd",MotionTestCmd,self._add_motion_test_command_to_queue)
+        self.pubs = [0]*2
+        self.pubs[0] = rospy.Publisher('/vector/feedback/faultlog', Faultlog, queue_size=10,latch=True)
+        self.pubs[1] = rospy.Publisher('/odometry_is_reset', Empty, queue_size=1)
+        self.subs = [0]*5
+        self.subs[0] = rospy.Subscriber("/vector/cmd_vel", Twist, self._add_motion_command_to_queue)
+        self.subs[1] = rospy.Subscriber("/vector/gp_command",ConfigCmd,self._add_config_command_to_queue)
+        self.subs[2] = rospy.Subscriber("/move_base/DWAPlannerROS/parameter_updates",Config,self._update_move_base_params)
+        self.subs[3] = rospy.Subscriber("/vector/motion_test_cmd",MotionTestCmd,self._add_motion_test_command_to_queue)
+        self.subs[4] = rospy.Subscriber("/reset_odometry",Empty,self._reset_odometry)
 
         """
         Start the receive handler thread
@@ -206,6 +211,10 @@ class VectorDriver:
         with self.terminate_mutex:
             self.need_to_terminate = True
         rospy.loginfo("Vector Driver has called the Shutdown method, terminating")
+        for sub in self.subs:
+            sub.unregister()
+        for pub in self.pubs:
+            pub.unregister()
         self.comm.Close()
         self.tx_queue_.close()
         self.rx_queue_.close()    
@@ -264,7 +273,7 @@ class VectorDriver:
             self.extracting_faultlog = False
             faultlog_msg = Faultlog()
             faultlog_msg.data = rsp_data
-            self.faultlog_pub.publish(faultlog_msg)
+            self.pubs[0].publish(faultlog_msg)
         else:
             
             header_stamp = self.vector_data.status.parse(rsp_data[START_STATUS_BLOCK:END_STATUS_BLOCK])
@@ -286,6 +295,12 @@ class VectorDriver:
                                convert_float_to_u32(command.linear.y),
                                convert_float_to_u32(command.angular.z)]]
         self._add_command_to_queue(cmds)
+    
+    def _reset_odometry(self,data):
+        cmds = [GENERAL_PURPOSE_CMD_ID,[GENERAL_PURPOSE_CMD_RESET_ODOMETRY,RESET_ALL_ODOMETRY]]
+        self._add_command_to_queue(cmds)
+        tmp = Empty()
+        self.pubs[1].publish(tmp) 
             
     def _add_config_command_to_queue(self,command):
         try:
